@@ -1,3 +1,4 @@
+#include "spinlock.h"
 // Segments in proc->gdt.
 #define NSEGS     7
 
@@ -51,6 +52,17 @@ struct context {
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+// A message queue for every receiver
+struct sig_queue{
+  struct spinlock lock;
+  char sig_arg[SIG_QUE_SIZE][MSGSIZE];
+  int sig_num_list[SIG_QUE_SIZE];
+  int start; // works as channel also
+  int end;
+};
+
+#define NoSigHandlers 4 // Number of signal handlers(0,1,2,3)
+
 // Per-process state
 struct proc {
   uint sz;                     // Size of process memory (bytes)
@@ -66,10 +78,37 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+   // signal handling data:
+  sighandler_t sig_htable[NoSigHandlers]; // table of function pointers of different signal handlers
+  int sig_handler_busy;                   // is the process executing the signal handler
+  struct sig_queue SigQueue; // Queue for pending signals 
 };
+
+// A message queue for every receiver
+struct msg_queue{
+  struct spinlock lock;
+  char data[BUFFER_SIZE][MSGSIZE];
+  int start;
+  int end;
+  int channel;  // channel is used for sleep and wakeup
+}MsgQueue[NPROC];
+
 
 // Process memory is laid out contiguously, low addresses first:
 //   text
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+// semaphore
+#define MAX_NPROC 5
+#define MAX_SEMAPHORE 3
+struct semaphore
+{
+    int value;
+    struct spinlock lock;
+    struct proc *queue[MAX_NPROC];
+    int end;
+    int start;
+}Semaphore[MAX_SEMAPHORE];

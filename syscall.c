@@ -98,6 +98,16 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
+extern int sys_send(void);
+extern int sys_recv(void);
+extern int sys_sig_set(void);
+extern int sys_sig_send(void);
+extern int sys_sig_pause(void);
+extern int sys_sig_ret(void);
+extern int sys_send_multi(void);
+extern int sys_sem_init(void);
+extern int sys_sem_P(void);
+extern int sys_sem_V(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -121,6 +131,16 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_send]    sys_send,
+[SYS_recv]    sys_recv,
+[SYS_send_multi]  sys_send_multi,
+[SYS_sig_set]     sys_sig_set,
+[SYS_sig_send]    sys_sig_send,
+[SYS_sig_pause]   sys_sig_pause,
+[SYS_sig_ret]     sys_sig_ret,
+[SYS_sem_init]	  sys_sem_init,
+[SYS_sem_P]	  sys_sem_P,
+[SYS_sem_V]	  sys_sem_V,
 };
 
 void
@@ -131,6 +151,8 @@ syscall(void)
   num = proc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     proc->tf->eax = syscalls[num]();
+    // cprintf("%d %s: sys call %d\n",
+    //         proc->pid, proc->name, num);
   } else {
     cprintf("%d %s: unknown sys call %d\n",
             proc->pid, proc->name, num);

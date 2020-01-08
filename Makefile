@@ -27,6 +27,8 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
+	sigret_syscall.o\
+
 
 # Cross-compiling (e.g., on Mac OS X)
 #TOOLPREFIX = i386-jos-elf-
@@ -51,7 +53,7 @@ TOOLPREFIX := $(shell if i386-jos-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/d
 endif
 
 # If the makefile can't find QEMU, specify its path here
-#QEMU = 
+QEMU = qemu-system-i386
 
 # Try to infer the correct QEMU
 ifndef QEMU
@@ -170,6 +172,9 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
+	_test_unicast\
+	_test_calcu\
+	_test_semaphore\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -242,6 +247,9 @@ EXTRA=\
 	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
+	test_unicast.c\
+	test_calcu.c\
+	test_semaphore.c\
 
 dist:
 	rm -rf dist

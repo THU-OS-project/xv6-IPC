@@ -88,6 +88,13 @@ exec(char *path, char **argv)
   proc->sz = sz;
   proc->tf->eip = elf.entry;  // main
   proc->tf->esp = sp;
+
+  // ****added**************
+  // Initializing the sig handler table of the process(which was copied from parent in fork)
+  for(i = 0; i < NoSigHandlers; i++)
+    proc->sig_htable[i] = 0;
+  // ***********************
+
   switchuvm(proc);
   freevm(oldpgdir);
   return 0;

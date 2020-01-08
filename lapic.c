@@ -115,6 +115,14 @@ cpunum(void)
   return 0;
 }
 
+int
+lapicid(void)
+{
+  if (!lapic)
+    return 0;
+  return lapic[ID] >> 24;
+}
+
 // Acknowledge interrupt.
 void
 lapiceoi(void)
