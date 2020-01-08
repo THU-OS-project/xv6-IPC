@@ -22,3 +22,8 @@
 #define SYS_close  21
 #define SYS_send   22
 #define SYS_recv   23
+#define SYS_send_multi 	24
+#define SYS_sig_set		25
+#define SYS_sig_send 	26
+#define SYS_sig_pause 	27
+#define SYS_sig_ret 	28

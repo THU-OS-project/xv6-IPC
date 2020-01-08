@@ -27,6 +27,7 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
+	sigret_syscall.o\
 
 
 # Cross-compiling (e.g., on Mac OS X)
@@ -172,6 +173,7 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_test_unicast\
+	_test_calcu\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -245,6 +247,7 @@ EXTRA=\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
 	test_unicast.c\
+	test_calcu.c\
 
 dist:
 	rm -rf dist
