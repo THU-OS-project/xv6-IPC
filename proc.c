@@ -26,6 +26,46 @@ pinit(void)
   initlock(&ptable.lock, "ptable");
 }
 
+// Must be called with interrupts disabled
+int
+cpuid() {
+  return mycpu()-cpus;
+}
+
+// Must be called with interrupts disabled to avoid the caller being
+// rescheduled between reading lapicid and running through the loop.
+struct cpu*
+mycpu(void)
+{
+  int apicid, i;
+  
+  if(readeflags()&FL_IF)
+    panic("mycpu called with interrupts enabled\n");
+  
+  apicid = cpunum();
+  // APIC IDs are not guaranteed to be contiguous. Maybe we should have
+  // a reverse map, or reserve a register to store &cpus[i].
+  for (i = 0; i < ncpu; ++i) {
+    if (cpus[i].id == apicid)
+      return &cpus[i];
+  }
+  panic("unknown apicid\n");
+}
+
+// Disable interrupts so that we are not rescheduled
+// while reading proc from the cpu structure
+struct proc*
+myproc(void) {
+  struct cpu *c;
+  struct proc *p;
+  pushcli();
+  c = mycpu();
+  p = c->proc;
+  popcli();
+  return p;
+}
+
+
 //PAGEBREAK: 32
 // Look in the process table for an UNUSED proc.
 // If found, change state to EMBRYO and initialize
@@ -457,3 +497,65 @@ procdump(void)
 }
 
 
+// ************ Unicasting ******************
+
+int 
+get_process_id(int pid){
+  int i;
+  for(i = 0 ; i < NPROC; i++){
+    if(ptable.proc[i].pid == pid)
+      return i;
+  }
+  return -1;
+}
+
+int
+send_msg(int sender_pid, int rec_pid, char *msg){
+  int id = get_process_id(rec_pid);
+  if(id == -1) return -1;
+  acquire(&MsgQueue[id].lock);
+  
+  if((MsgQueue[id].end + 1) % BUFFER_SIZE == MsgQueue[id].start){
+    // cprintf("Buffer is full\n");
+    release(&MsgQueue[id].lock);
+    return -1;
+  }
+
+  int i;
+  for(i = 0; i < MSGSIZE; i++){
+    MsgQueue[id].data[MsgQueue[id].end][i] = msg[i];
+  }
+
+  MsgQueue[id].end++;
+  MsgQueue[id].end %= BUFFER_SIZE;
+
+  wakeup(&MsgQueue[id].channel);
+  release(&MsgQueue[id].lock);
+  return 0;
+}
+
+int
+recv_msg(char* msg){
+  int rec_id = myproc()->pid;
+  int id = get_process_id(rec_id);
+  if(id == -1) return -1;
+  acquire(&MsgQueue[id].lock);
+  
+  while(1){
+    if(MsgQueue[id].end == MsgQueue[id].start){
+      sleep(&MsgQueue[id].channel, &MsgQueue[id].lock);
+    }
+    else{
+      int i;
+      for(i = 0; i < MSGSIZE; i++){
+        msg[i] = MsgQueue[id].data[MsgQueue[id].start][i];
+      }
+      MsgQueue[id].start++;
+      MsgQueue[id].start %= BUFFER_SIZE;
+
+      release(&MsgQueue[id].lock);
+      break;
+    }
+  }
+  return 0;
+}

@@ -88,3 +88,24 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// IPC unicast:
+
+int 
+sys_send(void){
+  int sender_pid, rec_pid;
+  char* msg;
+  // fetch the arguments
+  if(argint(0, &sender_pid) < 0 || argint(1, &rec_pid) < 0 || argptr(2, &msg, MSGSIZE) < 0)
+    return -1;
+  return send_msg(sender_pid, rec_pid, msg);
+}
+
+int 
+sys_recv(void){
+  char* msg;
+  // fetch the arguments
+  if(argptr(0, &msg, MSGSIZE) < 0)
+    return -1;
+  return  recv_msg(msg);
+}
